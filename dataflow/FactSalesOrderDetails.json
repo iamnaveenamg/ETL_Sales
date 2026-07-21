@@ -1,0 +1,189 @@
+{
+	"name": "FactSalesOrderDetails",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "CDMSourceForWarehouse",
+						"type": "DatasetReference"
+					},
+					"name": "CDMSalesOrderDetails"
+				},
+				{
+					"dataset": {
+						"referenceName": "Destination",
+						"type": "DatasetReference"
+					},
+					"name": "DimProductSource"
+				},
+				{
+					"dataset": {
+						"referenceName": "CDMSourceForWarehouse",
+						"type": "DatasetReference"
+					},
+					"name": "CDMSalesOrderHeader"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Destination",
+						"type": "DatasetReference"
+					},
+					"name": "sink1",
+					"rejectedDataLinkedService": {
+						"referenceName": "AzureDataLakeStorageGen2",
+						"type": "LinkedServiceReference"
+					}
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "join2"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          SalesOrderID as integer,",
+				"          SalesOrderDetailID as integer,",
+				"          OrderQty as short,",
+				"          ProductID as integer,",
+				"          UnitPrice as decimal(20,4),",
+				"          UnitPriceDiscount as decimal(20,4),",
+				"          LineTotal as decimal(20,4),",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: (concat('select * from SalesLT.CDMSalesOrderDetails')),",
+				"     format: 'query',",
+				"     partitionBy('roundRobin', 2)) ~> CDMSalesOrderDetails",
+				"source(output(",
+				"          ProductID as integer,",
+				"          Name as string,",
+				"          ProductNumber as string,",
+				"          Color as string,",
+				"          StandardCost as decimal(20,4),",
+				"          ListPrice as decimal(20,4),",
+				"          Size as string,",
+				"          ProductCategoryName as string,",
+				"          ProductModelName as string,",
+				"          CatalogDescription as string,",
+				"          Culture as string,",
+				"          Description as string,",
+				"          Weight as decimal(20,4),",
+				"          SellStartDate as timestamp,",
+				"          SellEndDate as timestamp,",
+				"          DiscontinuedDate as timestamp,",
+				"          ThumbNailPhoto as binary,",
+				"          ThumbnailPhotoFileName as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp,",
+				"          Hashvalue as string,",
+				"          DimProductSK as long",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: (concat('select * from SalesWH.DimProduct')),",
+				"     format: 'query') ~> DimProductSource",
+				"source(output(",
+				"          SalesOrderID as integer,",
+				"          RevisionNumber as integer,",
+				"          OrderDate as timestamp,",
+				"          DueDate as timestamp,",
+				"          ShipDate as timestamp,",
+				"          Status as integer,",
+				"          OnlineOrderFlag as boolean,",
+				"          SalesOrderNumber as string,",
+				"          PurchaseOrderNumber as string,",
+				"          AccountNumber as string,",
+				"          CustomerID as integer,",
+				"          ShipToAddressID as integer,",
+				"          BillToAddressID as integer,",
+				"          ShipMethod as string,",
+				"          CreditCardApprovalCode as string,",
+				"          SubTotal as decimal(20,4),",
+				"          TaxAmt as decimal(20,4),",
+				"          Freight as decimal(20,4),",
+				"          TotalDue as decimal(20,4),",
+				"          Comment as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: (concat('select * from SalesLT.CDMSalesOrderHeader ')),",
+				"     format: 'query') ~> CDMSalesOrderHeader",
+				"join2 derive(Hashvalue = sha2(256, columns() ),",
+				"     partitionBy('roundRobin', 2)) ~> derivedColumn1",
+				"derivedColumn1 select(mapColumn(",
+				"          SalesOrderDetailID,",
+				"          DimProductSK,",
+				"          OrderQty,",
+				"          UnitPrice,",
+				"          UnitPriceDiscount,",
+				"          LineTotal,",
+				"          rowguid = CDMSalesOrderDetails@rowguid,",
+				"          ModifiedDate = CDMSalesOrderDetails@ModifiedDate,",
+				"          Hashvalue",
+				"     ),",
+				"     partitionBy('roundRobin', 2),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"CDMSalesOrderDetails, DimProductSource join(CDMSalesOrderDetails@ProductID == DimProductSource@ProductID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     partitionBy('roundRobin', 2),",
+				"     broadcast: 'auto')~> join1",
+				"join1, CDMSalesOrderHeader join(CDMSalesOrderDetails@SalesOrderID == CDMSalesOrderHeader@SalesOrderID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join2",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     recreate:true,",
+				"     format: 'table',",
+				"     dateFormat:'dd/MM/yyyy',",
+				"     timestampFormat:'MM/dd/yyyy HH:mm:ss',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     outputRejectedData: true,",
+				"     mapColumn(",
+				"          SalesOrderDetailID,",
+				"          DimProductSK,",
+				"          OrderQty,",
+				"          UnitPrice,",
+				"          UnitPriceDiscount,",
+				"          LineTotal,",
+				"          rowguid,",
+				"          ModifiedDate,",
+				"          Hashvalue",
+				"     ),",
+				"     partitionBy('roundRobin', 2)) ~> sink1"
+			]
+		}
+	}
+}

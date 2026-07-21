@@ -1,0 +1,145 @@
+{
+	"name": "DimensionProduct",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "CDMSourceForWarehouse",
+						"type": "DatasetReference"
+					},
+					"name": "SourceCDMProduct"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Destination",
+						"type": "DatasetReference"
+					},
+					"name": "sink1",
+					"rejectedDataLinkedService": {
+						"referenceName": "AzureDataLakeStorageGen2",
+						"type": "LinkedServiceReference"
+					}
+				}
+			],
+			"transformations": [
+				{
+					"name": "DimProductSK",
+					"description": "Adding new key DimProductSK starting from 1 with step 1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          ProductID as integer,",
+				"          Name as string,",
+				"          ProductNumber as string,",
+				"          Color as string,",
+				"          StandardCost as decimal(20,4),",
+				"          ListPrice as decimal(20,4),",
+				"          Size as string,",
+				"          ProductCategoryName as string,",
+				"          ProductModelName as string,",
+				"          CatalogDescription as string,",
+				"          Culture as string,",
+				"          Description as string,",
+				"          Weight as decimal(20,4),",
+				"          SellStartDate as timestamp,",
+				"          SellEndDate as timestamp,",
+				"          DiscontinuedDate as timestamp,",
+				"          ThumbNailPhoto as binary,",
+				"          ThumbnailPhotoFileName as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: (concat('select * from SalesLT.CDMProduct')),",
+				"     format: 'query',",
+				"     partitionBy('roundRobin', 2)) ~> SourceCDMProduct",
+				"derivedColumn1 keyGenerate(output(DimProductSK as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L,",
+				"     partitionBy('roundRobin', 2)) ~> DimProductSK",
+				"SourceCDMProduct derive(Hashvalue = sha2(256, columns() ),",
+				"     partitionBy('roundRobin', 2)) ~> derivedColumn1",
+				"DimProductSK select(mapColumn(",
+				"          ProductID,",
+				"          Name,",
+				"          ProductNumber,",
+				"          Color,",
+				"          StandardCost,",
+				"          ListPrice,",
+				"          Size,",
+				"          ProductCategoryName,",
+				"          ProductModelName,",
+				"          CatalogDescription,",
+				"          Culture,",
+				"          Description,",
+				"          Weight,",
+				"          SellStartDate,",
+				"          SellEndDate,",
+				"          DiscontinuedDate,",
+				"          ThumbNailPhoto,",
+				"          ThumbnailPhotoFileName,",
+				"          rowguid,",
+				"          ModifiedDate,",
+				"          Hashvalue,",
+				"          DimProductSK",
+				"     ),",
+				"     partitionBy('roundRobin', 2),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     recreate:true,",
+				"     format: 'table',",
+				"     dateFormat:'dd/MM/yyyy',",
+				"     timestampFormat:'MM/dd/yyyy HH:mm:ss',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     outputRejectedData: true,",
+				"     mapColumn(",
+				"          ProductID,",
+				"          Name,",
+				"          ProductNumber,",
+				"          Color,",
+				"          StandardCost,",
+				"          ListPrice,",
+				"          Size,",
+				"          ProductCategoryName,",
+				"          ProductModelName,",
+				"          CatalogDescription,",
+				"          Culture,",
+				"          Description,",
+				"          Weight,",
+				"          SellStartDate,",
+				"          SellEndDate,",
+				"          DiscontinuedDate,",
+				"          ThumbNailPhoto,",
+				"          ThumbnailPhotoFileName,",
+				"          rowguid,",
+				"          ModifiedDate,",
+				"          Hashvalue,",
+				"          DimProductSK",
+				"     ),",
+				"     partitionBy('roundRobin', 2)) ~> sink1"
+			]
+		}
+	}
+}

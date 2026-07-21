@@ -1,0 +1,10 @@
+{
+	"name": "AzureSqlDatabase890",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/42bd728c-4223-46a6-8c6e-08f922d3b2ab/resourceGroups/mgnsynapse/providers/Microsoft.Sql/servers/testdbmgn",
+		"groupId": "sqlServer",
+		"fqdns": [
+			"testdbmgn.database.windows.net"
+		]
+	}
+}

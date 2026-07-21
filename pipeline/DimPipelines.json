@@ -1,0 +1,83 @@
+{
+	"name": "DimPipelines",
+	"properties": {
+		"activities": [
+			{
+				"name": "DimCustomer_DF",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "DimensionCustomer",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"SourceCDMCustomer": {
+								"SchemaName": "SalesLT",
+								"ViewName": "CDMCustomer"
+							},
+							"sink1": {
+								"TableName": "DimCustomer"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "DimProduct_DF",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "DimCustomer_DF",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "DimensionProduct",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"SourceCDMProduct": {
+								"SchemaName": "SalesLT",
+								"ViewName": "CDMProduct"
+							},
+							"sink1": {
+								"TableName": "DimProduct"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2026-07-21T16:33:55Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

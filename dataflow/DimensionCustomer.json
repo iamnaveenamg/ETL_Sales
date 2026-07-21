@@ -1,0 +1,147 @@
+{
+	"name": "DimensionCustomer",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "CDMSourceForWarehouse",
+						"type": "DatasetReference"
+					},
+					"name": "SourceCDMCustomer"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Destination",
+						"type": "DatasetReference"
+					},
+					"name": "sink1",
+					"rejectedDataLinkedService": {
+						"referenceName": "AzureDataLakeStorageGen2",
+						"type": "LinkedServiceReference"
+					}
+				}
+			],
+			"transformations": [
+				{
+					"name": "DimCustomerSK"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CustomerID as integer,",
+				"          NameStyle as boolean,",
+				"          Title as string,",
+				"          FirstName as string,",
+				"          MiddleName as string,",
+				"          LastName as string,",
+				"          Suffix as string,",
+				"          CompanyName as string,",
+				"          SalesPerson as string,",
+				"          AddressType as string,",
+				"          AddressLine1 as string,",
+				"          AddressLine2 as string,",
+				"          City as string,",
+				"          StateProvince as string,",
+				"          CountryRegion as string,",
+				"          EmailAddress as string,",
+				"          Phone as string,",
+				"          PasswordHash as string,",
+				"          PasswordSalt as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: (concat('select * from SalesLT.CDMCustomer')),",
+				"     format: 'query',",
+				"     partitionBy('roundRobin', 2)) ~> SourceCDMCustomer",
+				"derivedColumn1 keyGenerate(output(DimCustomerSK as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L,",
+				"     partitionBy('roundRobin', 2)) ~> DimCustomerSK",
+				"SourceCDMCustomer derive(Hashvalue = sha2(256, columns() ),",
+				"     partitionBy('roundRobin', 2)) ~> derivedColumn1",
+				"DimCustomerSK select(mapColumn(",
+				"          CustomerID,",
+				"          NameStyle,",
+				"          Title,",
+				"          FirstName,",
+				"          MiddleName,",
+				"          LastName,",
+				"          Suffix,",
+				"          CompanyName,",
+				"          SalesPerson,",
+				"          AddressType,",
+				"          AddressLine1,",
+				"          AddressLine2,",
+				"          City,",
+				"          StateProvince,",
+				"          CountryRegion,",
+				"          EmailAddress,",
+				"          Phone,",
+				"          PasswordHash,",
+				"          PasswordSalt,",
+				"          rowguid,",
+				"          ModifiedDate,",
+				"          Hashvalue,",
+				"          DimCustomerSK",
+				"     ),",
+				"     partitionBy('roundRobin', 2),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     recreate:true,",
+				"     format: 'table',",
+				"     dateFormat:'dd/MM/yyyy',",
+				"     timestampFormat:'MM/dd/yyyy HH:mm:ss',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     outputRejectedData: true,",
+				"     mapColumn(",
+				"          CustomerID,",
+				"          NameStyle,",
+				"          Title,",
+				"          FirstName,",
+				"          MiddleName,",
+				"          LastName,",
+				"          Suffix,",
+				"          CompanyName,",
+				"          SalesPerson,",
+				"          AddressType,",
+				"          AddressLine1,",
+				"          AddressLine2,",
+				"          City,",
+				"          StateProvince,",
+				"          CountryRegion,",
+				"          EmailAddress,",
+				"          Phone,",
+				"          PasswordHash,",
+				"          PasswordSalt,",
+				"          rowguid,",
+				"          ModifiedDate,",
+				"          Hashvalue,",
+				"          DimCustomerSK",
+				"     ),",
+				"     partitionBy('roundRobin', 2)) ~> sink1"
+			]
+		}
+	}
+}

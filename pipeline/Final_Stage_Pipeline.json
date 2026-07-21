@@ -1,0 +1,95 @@
+{
+	"name": "Final_Stage_Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "SourceToStaging",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Source_Pipeline_Staging",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "StagingToTransform",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "SourceToStaging",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Staging_Pipeline_Transform",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "DimPipeline",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "StagingToTransform",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "DimPipelines",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "FactPipeline",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "DimPipeline",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FactPipeline",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2026-07-21T16:48:15Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}
